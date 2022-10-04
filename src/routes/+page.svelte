@@ -11,7 +11,7 @@
 		breakpointObserver,
 		ClickableTile
 	} from 'carbon-components-svelte';
-	import { torrents, session, unwantedFiles, rpc } from '$lib/stores';
+	import { unwantedFiles, rpc } from '$lib/stores';
 	import { filesize } from '$lib/utils';
 	import {
 		Torrent,
@@ -19,7 +19,8 @@
 		TorrentPriority,
 		TorrentState,
 		torrentStatusToString,
-		uploadTorrent
+		uploadTorrent,
+		type Session
 	} from '$lib/torrents';
 	import CloudDownload from 'carbon-icons-svelte/lib/CloudDownload.svelte';
 	import DataBase from 'carbon-icons-svelte/lib/DataBase.svelte';
@@ -31,10 +32,11 @@
 	import Upload from 'carbon-icons-svelte/lib/Upload.svelte';
 	import Link from 'carbon-icons-svelte/lib/Link.svelte';
 	import Touch from 'carbon-pictograms-svelte/lib/Touch.svelte';
-	import { derived, writable, type Writable } from 'svelte/store';
+	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import TorrentUrlUploadForm from '$lib/TorrentURLUploadForm.svelte';
 	import TorrentFileUploadForm from '$lib/TorrentFileUploadForm.svelte';
 	import TorrentProperties from '$lib/TorrentProperties.svelte';
+	import { onMount } from 'svelte';
 
 	enum RightPaneState {
 		AddingURL = 'url',
@@ -42,21 +44,16 @@
 		ViewingTorrent = 'i dunno lol'
 	}
 
-	const activeTorents = derived(torrents, ($x) => $x?.filter((t) => t.running));
+	let activeTorents: Readable<Torrent[] | undefined> | undefined;
 
-	const finishedTorrents = derived(torrents, ($x) =>
-		$x?.filter(
-			(t) =>
-				t.data.status == TorrentState.QueuedSeed ||
-				t.data.status == TorrentState.Seed ||
-				t.data.percentDone == 1
-		)
-	);
+	let finishedTorrents: Readable<Torrent[] | undefined> | undefined;
 
 	const size = breakpointObserver();
 	const desktop = size.largerThan('sm');
 
-	let currentTorrents = torrents;
+	let torrents: Readable<Torrent[] | undefined> | undefined;
+	let session: Writable<Session | undefined> | undefined;
+	let currentTorrents: Readable<Torrent[] | undefined> | undefined;
 	let selectedIndex = 0;
 	let selectedTorrent: Writable<number | null> = writable(null);
 	// let details = derived(
@@ -83,31 +80,20 @@
 	let torrentFile: string;
 	let lastLength: number | undefined;
 
-	torrents.subscribe((x) => {
-		if (x != undefined) {
-			if (lastLength == undefined) {
-				lastLength = x.length;
-			} else if (lastLength > x.length) {
-				$selectedTorrent = null;
-				lastLength = x.length;
-			} else if (lastLength < x.length) {
-				lastLength = x.length;
-			}
+	$: if (torrents && activeTorents && finishedTorrents) {
+		switch (selectedIndex) {
+			case 0:
+				currentTorrents = torrents;
+				break;
+			case 1:
+				currentTorrents = activeTorents;
+				break;
+			case 2:
+				currentTorrents = finishedTorrents;
+				break;
+			default:
+				break;
 		}
-	});
-
-	$: switch (selectedIndex) {
-		case 0:
-			currentTorrents = torrents;
-			break;
-		case 1:
-			currentTorrents = activeTorents;
-			break;
-		case 2:
-			currentTorrents = finishedTorrents;
-			break;
-		default:
-			break;
 	}
 
 	function torrentStatus(torrent: Torrent): string {
@@ -155,6 +141,32 @@
 		}
 		return `${filesize(torrent.data.rateDownload)}/s`;
 	}
+
+	onMount(async () => {
+		({ torrents, session } = await import('$lib/stores'));
+		currentTorrents = torrents;
+		activeTorents = derived(torrents, ($x) => $x?.filter((t) => t.running));
+		finishedTorrents = derived(torrents, ($x) =>
+			$x?.filter(
+				(t) =>
+					t.data.status == TorrentState.QueuedSeed ||
+					t.data.status == TorrentState.Seed ||
+					t.data.percentDone == 1
+			)
+		);
+		torrents.subscribe((x) => {
+			if (x != undefined) {
+				if (lastLength == undefined) {
+					lastLength = x.length;
+				} else if (lastLength > x.length) {
+					$selectedTorrent = null;
+					lastLength = x.length;
+				} else if (lastLength < x.length) {
+					lastLength = x.length;
+				}
+			}
+		});
+	});
 </script>
 
 <div class="md:flex">
@@ -185,7 +197,7 @@
 				Add URL
 			</Button>
 		</div>
-		{#if $currentTorrents}
+		{#if currentTorrents && $currentTorrents}
 			<!-- {#if false} -->
 			{#each $currentTorrents as torrent}
 				{@const data = torrent.data}
@@ -284,7 +296,7 @@
 				: ''} flex-col h-screen overflow-y-scroll no-scrollbar grow pt-5 mx-5 lg:mx-8 xlg:mx-12 max:mx-13"
 		>
 			{#if rightPaneState == RightPaneState.AddingURL}
-				{#if $session}
+				{#if session && $session}
 					<TorrentUrlUploadForm
 						bind:downloadDir
 						bind:magnetLink
@@ -293,7 +305,7 @@
 					/>
 				{/if}
 			{:else if rightPaneState == RightPaneState.AddingFile}
-				{#if $session}
+				{#if session && $session}
 					<TorrentFileUploadForm
 						bind:downloadDir
 						bind:torrentFile
