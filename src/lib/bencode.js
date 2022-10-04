@@ -54,9 +54,9 @@ function getIntFromBuffer(buffer, start, end) {
  * Decodes bencoded data.
  *
  * @param  {Buffer} data
- * @param  {Number} start (optional)
- * @param  {Number} end (optional)
- * @param  {String} encoding (optional)
+ * @param  {Number} [start] (optional)
+ * @param  {Number} [end] (optional)
+ * @param  {String} [encoding] (optional)
  * @return {Object|Array|Buffer|String|Number}
  */
 export function decode(data, start, end, encoding) {
