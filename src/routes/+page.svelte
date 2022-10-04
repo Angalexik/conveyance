@@ -322,7 +322,7 @@
 				{@const filtered = $torrents?.filter((x) => x.data.id == $selectedTorrent)}
 				<h3 class="mb-4">{filtered?.[0]?.data?.name}</h3>
 				{#if filtered && filtered != []}
-					<TorrentProperties container open torrentId={$selectedTorrent} />
+					<TorrentProperties container torrentId={$selectedTorrent} />
 				{/if}
 			{/if}
 

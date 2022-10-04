@@ -31,7 +31,6 @@
 	import { goto } from '$app/navigation';
 
 	export let torrentId: number;
-	export let open: boolean;
 	export let container = false;
 
 	$: torrent = $torrents?.filter((x) => x.data.id == torrentId)?.[0];
@@ -58,9 +57,11 @@
 	});
 	let modalOpen = false;
 	let trashFiles = false;
+	let selected: number;
 
 	let files: TorrentFile[] = [];
-	$: if (open) {
+	// The files tab is selected
+	$: if (selected == 1) {
 		torrent?.files()?.then((f) => {
 			files = f;
 		});
@@ -79,7 +80,7 @@
 	}
 </script>
 
-<Tabs type={container ? 'container' : undefined}>
+<Tabs type={container ? 'container' : undefined} bind:selected>
 	<Tab label="Information" />
 	<Tab label="Files" />
 	<Tab label="Options" />
