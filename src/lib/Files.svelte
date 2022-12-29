@@ -6,8 +6,8 @@
 		label: string;
 		nodes: Array<Folder | File>;
 	};
-	export function isFolder(thing: any): thing is Folder {
-		return thing?.nodes && thing?.nodes?.length > 0;
+	export function isFolder(thing: File | Folder): thing is Folder {
+		return (thing as Folder)?.nodes && (thing as Folder)?.nodes?.length > 0;
 	}
 </script>
 
