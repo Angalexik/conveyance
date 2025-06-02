@@ -16,7 +16,7 @@ import {
 import type { Torrent } from './torrents';
 
 export const rpc = import.meta.env.DEV
-	? new RPC(new URL('http://10.0.1.25:9091/transmission/rpc'))
+	? new RPC(new URL('http://localhost:9091/transmission/rpc'))
 	: new RPC(new URL('/transmission/rpc', import.meta.url));
 
 export function setPromise<T>(promise: Promise<T>, set: Subscriber<T>) {
