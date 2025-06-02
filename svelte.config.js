@@ -10,14 +10,12 @@ const config = {
 	}),
 
 	kit: {
-		adapter: adapter(),
-		prerender: {
-			default: true
-		},
+		adapter: adapter({
+			fallback: "index.html"
+		}),
 		paths: {
 			base: '/transmission/web'
 		},
-		trailingSlash: 'always'
 	}
 };
 
