@@ -1,11 +1,15 @@
+import Cookies from 'js-cookie';
+
 export default class RPC {
 	private session_id: string | null = null;
+	public auth: string = `Basic ${Cookies.get('auth')}` ?? '';
 
 	constructor(private endpoint: URL) {}
 
 	async sendRequest(method: string, data: any): Promise<Response> {
 		const headers = {
-			'X-Transmission-Session-Id': this.session_id ?? ''
+			'X-Transmission-Session-Id': this.session_id ?? '',
+			Authorization: this.auth
 		};
 		const body = JSON.stringify({
 			arguments: data,
